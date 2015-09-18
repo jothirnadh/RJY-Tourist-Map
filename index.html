@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset=utf-8 />
+<title>Jothi's MAP</title>
+<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+<script src='https://api.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>
+<link href='https://api.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />
+<style>
+  body { margin:0; padding:0; }
+  #map { position:absolute; top:0; bottom:0; width:100%; }
+</style>
+</head>
+<body>
+
+<style>
+#inputs,
+#errors,
+#directions {
+    position: absolute;
+    width: 33.3333%;
+    max-width: 300px;
+    min-width: 200px;
+}
+
+#inputs {
+    z-index: 10;
+    top: 10px;
+    left: 10px;
+}
+
+#directions {
+    z-index: 99;
+    background: rgba(0,0,0,.8);
+    top: 0;
+    right: 0;
+    bottom: 0;
+    overflow: auto;
+}
+
+#errors {
+    z-index: 8;
+    opacity: 0;
+    padding: 10px;
+    border-radius: 0 0 3px 3px;
+    background: rgba(0,0,0,.25);
+    top: 90px;
+    left: 10px;
+}
+
+</style>
+
+
+<style>
+.legend label,
+.legend span {
+  display:block;
+  float:left;
+  height:15px;
+  width:20%;
+  text-align:center;
+  font-size:9px;
+  color:#808080;
+  }
+</style>
+
+<!-- Set the display of this container to none so we can
+     add it programmatically to `legendControl` -->
+<div id='legend' style='display:none;'>
+  <strong>Map Legend</strong>
+  <nav class='legend clearfix'>
+    <span style='background:#fc4353;'></span>
+    <span style='background:#7ec9b1;'></span>
+    <span style='background:#2B8CBE;'></span>
+    <span style='background:#fc2379;'></span>
+    <span style='background:#bf051e;'></span>
+    <label>Monument</label>
+    <label>restarant</label>
+    <label>Musuem</label>
+    <label>Airport</label>
+    <label>Building</label>
+    <small>Source: <a href="http://overpass-turbo.eu/">overpass-turbo</a></small>
+</div>
+
+
+<script src='https://api.mapbox.com/mapbox.js/plugins/mapbox-directions.js/v0.3.0/mapbox.directions.js'></script>
+<link rel='stylesheet' href='https://api.mapbox.com/mapbox.js/plugins/mapbox-directions.js/v0.3.0/mapbox.directions.css' type='text/css' />
+<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
+
+<div id='map'></div>
+<div id='inputs'></div>
+<div id='errors'></div>
+<div id='directions'>
+  <div id='routes'></div>
+  <div id='instructions'></div>
+</div>
+
+<script>
+L.mapbox.accessToken = 'pk.eyJ1Ijoiam90aGlybmFkaCIsImEiOiI0MTIzNmYwZmIzNWQ3MjFlNWE2YmE4YzU1YWQyNDdhOCJ9.afll1jVPlwiIoz0bJx51_g';
+
+var geojson = [
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2045669,28.6141698]
+    },
+    "properties": {
+      "title": "Raisina Hill",
+      "description": "Place: locality",
+      "marker-color": "#fc4353",
+      "marker-size": "large",
+      "marker-symbol": "monument"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.20709,28.58338]
+    },
+    "properties": {
+      "title": "Safdarjung Airport",
+      "description": "Headquaters of the Airports Authority of India",
+      "marker-color": "#fc2379",
+      "marker-size": "large",
+      "marker-symbol": "airport"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.21063,28.58920]
+    },
+    "properties": {
+      "title": "Safdarjung Tomb",
+      "description": "Tourist place",
+      "marker-color": "#fc4353",
+      "marker-size": "large",
+      "marker-symbol": "monument"
+    }
+  },
+   {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.23111,28.61270]
+    },
+    "properties": {
+      "title": "India Gate",
+      "description": "Constructed in the memory of Soldiers",
+      "marker-color": "#fc4353",
+      "marker-size": "large",
+      "marker-symbol": "monument"
+    }
+  },
+   {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2077915,28.6189234]
+    },
+    "properties": {
+      "title": "Parliament Museum",
+      "description": "Tourism= Museum",
+      "marker-color": "#2B8CBE",
+      "marker-size": "large",
+      "marker-symbol": "museum",
+      url: "https://en.wikipedia.org/wiki/Parliament_Museum"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2421721,28.6132826]
+    },
+    "properties": {
+      "title": "Crafts Museum",
+      "description": "Tourism= Museum",
+      "marker-color": "#2B8CBE",
+      "marker-size": "large",
+      "marker-symbol": "museum"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2445016,28.6129633]
+    },
+    "properties": {
+      "title": "Science Museum",
+      "description": "Tourism= Museum",
+      "marker-color": "#2B8CBE",
+      "marker-size": "large",
+      "marker-symbol": "museum"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.1982266,28.6037468]
+    },
+    "properties": {
+      "title": "Nehru Planetarium",
+      "description": "Part of the Teen Murti Bhavan",
+      "marker-color": "#2B8CBE",
+      "marker-size": "large",
+      "marker-symbol": "museum"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.198872,28.6026982]
+    },
+    "properties": {
+      "title": "Teen Murti Bhavan",
+      "description": "The largest number of buildings in New Delhi were designed by Robert Tor Russel (1888-1977) including Flagstaff House the Commander-in-Chief’s residence which was to be occupied by the first Indian Prime Minister Jawaharlal Nehru",
+      "marker-color": "#2B8CBE",
+      "marker-size": "large",
+      "marker-symbol": "museum"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2235361,28.6048146]
+    },
+    "properties": {
+      "title": "Taj Mahal Hotel",
+      "description": "tourism=hotel",
+      "marker-color": "#7ec9b1",
+      "marker-size": "large",
+      "marker-symbol": "restaurant"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2165438,28.6006254]
+    },
+    "properties": {
+      "title": "Claridges Hotel",
+      "description": "tourism=hotel",
+      "marker-color": "#7ec9b1",
+      "marker-size": "large",
+      "marker-symbol": "restaurant"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.228846,28.6017391]
+    },
+    "properties": {
+      "title": "The Ambassador",
+      "description": "tourism=hotel",
+      "marker-color": "#7ec9b1",
+      "marker-size": "large",
+      "marker-symbol": "shop"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "coordinates": [77.2183837,28.6186865]
+    },
+    "properties": {
+      "title": "Le Méridien",
+      "description": "tourism=hotel",
+      "marker-color": "#7ec9b1",
+      "marker-size": "large",
+      "marker-symbol": "restaurant"
+    }
+  }
+];
+
+var map = L.mapbox.map('map', null, {
+    zoomControl: false
+})
+    .setView([28.6246,77.2179], 14)
+    .addControl(L.mapbox.geocoderControl('mapbox.places'));
+map.legendControl.addLegend(document.getElementById('legend').innerHTML);
+
+var myLayer = L.mapbox.featureLayer().addTo(map);
+
+var hash = L.hash(map);
+
+var layers = {
+      Streets: L.mapbox.tileLayer('mapbox.streets'),
+      Outdoors: L.mapbox.tileLayer('mapbox.outdoors'),
+      Satellite: L.mapbox.tileLayer('mapbox.satellite'),
+      Jothi: L.mapbox.tileLayer('jothirnadh.91c6ef22')
+  };
+
+  layers.Streets.addTo(map);
+  L.control.layers(layers).addTo(map);
+
+
+myLayer.setGeoJSON(geojson);
+myLayer.on('mouseover', function(e) {
+    e.layer.openPopup();
+});
+myLayer.on('mouseout', function(e) {
+    e.layer.closePopup();
+});
+
+// move the attribution control out of the way
+map.attributionControl.setPosition('bottomleft');
+
+// create the initial directions object, from which the layer
+// and inputs will pull data.
+var directions = L.mapbox.directions();
+
+var directionsLayer = L.mapbox.directions.layer(directions)
+    .addTo(map);
+
+var directionsInputControl = L.mapbox.directions.inputControl('inputs', directions)
+    .addTo(map);
+
+var directionsErrorsControl = L.mapbox.directions.errorsControl('errors', directions)
+    .addTo(map);
+
+var directionsRoutesControl = L.mapbox.directions.routesControl('routes', directions)
+    .addTo(map);
+
+var directionsInstructionsControl = L.mapbox.directions.instructionsControl('instructions', directions)
+    .addTo(map);
+
+var nprGrid = L.mapbox.gridLayer('jothirnadh.91c6ef22').addTo(map);
+
+// you would usually use the gridControl to display a nice box in the corner
+// with your data, since we want a popup instead we won't initialize the gridControl
+
+nprGrid.on('mouseover', function(e) {
+    if (!e.data) return;
+    var popup = L.popup()
+        .setLatLng(e.latLng)
+        .setContent(e.data.building)
+        .openOn(map);
+});
+
+</script>
+
+</body>
+</html>
