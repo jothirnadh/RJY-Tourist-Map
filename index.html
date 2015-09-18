@@ -79,7 +79,7 @@
     <label>Police Station</label>
     <label>Park</label>
     <label>Temple</label>
-    <small>Source: <a href="http://overpass-turbo.eu/">overpass-turbo</a></small>
+    <small>Source: <a href="http://overpass-turbo.eu/">Overpass-Turbo</a></small>
 </div>
 
 
@@ -299,7 +299,7 @@ var layers = {
       Streets: L.mapbox.tileLayer('mapbox.streets'),
       Outdoors: L.mapbox.tileLayer('mapbox.outdoors'),
       Satellite: L.mapbox.tileLayer('mapbox.satellite'),
-      Jothi: L.mapbox.tileLayer('jothirnadh.91c6ef22')
+      Jothi: L.mapbox.tileLayer('jothirnadh.5c02aecb')
   };
 
   layers.Streets.addTo(map);
@@ -336,7 +336,7 @@ var directionsRoutesControl = L.mapbox.directions.routesControl('routes', direct
 var directionsInstructionsControl = L.mapbox.directions.instructionsControl('instructions', directions)
     .addTo(map);
 
-var nprGrid = L.mapbox.gridLayer('jothirnadh.91c6ef22').addTo(map);
+var nprGrid = L.mapbox.gridLayer('jothirnadh.5c02aecb').addTo(map);
 
 // you would usually use the gridControl to display a nice box in the corner
 // with your data, since we want a popup instead we won't initialize the gridControl
