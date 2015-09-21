@@ -1,380 +1,438 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset=utf-8 />
-<title>Rajahmundry All-Purpose Map</title>
-<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-<script src='https://api.mapbox.com/mapbox.js/v2.2.2/mapbox.js'></script>
-<link href='https://api.mapbox.com/mapbox.js/v2.2.2/mapbox.css' rel='stylesheet' />
-<style>
-  body { margin:0; padding:0; }
-  #map { position:absolute; top:0; bottom:0; width:100%; }
-</style>
-</head>
-<body>
+	<head>
+	  <meta charset=utf-8 />
+	  <title>Rajahmundry General Purpose Map</title>
+	  <link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,700' rel='stylesheet'>
+	  <script src='https://api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.js'></script>
+	  <link href='https://api.tiles.mapbox.com/mapbox.js/v2.1.4/mapbox.css' rel='stylesheet' />
+	  	<style>
+			body {
+			  color:#404040;
+			  font:400 15px/22px 'Helvetica Neue', Sans-serif;
+			  margin:0;
+			  padding:0;
+			  -webkit-font-smoothing:antialiased;
+			}
+			* {
+			  -webkit-box-sizing:border-box;
+			  -moz-box-sizing:border-box;
+			  box-sizing:border-box;
+			}
+			h1 {
+			  font-size:22px;
+			  margin:0;
+			  font-weight:400;
+			}
+			a {
+			  color:#404040;
+			  text-decoration:none;
+			}
+			a:hover { color:#101010; }
 
-<style>
-#inputs,
-#errors,
-#directions {
-    position: absolute;
-    width: 33.3333%;
-    max-width: 300px;
-    min-width: 200px;
-}
+			.sidebar {
+			  position:absolute;
+			  width:33.3333%;
+			  height:100%;
+			  top:0;left:0;
+			  overflow:hidden;
+			  border-right:1px solid rgba(0,0,0,0.25);
+			}
+			.pad2 {
+			  padding:20px;
+			}
+			.quiet {
+			  color:#888;
+			}
+			.map {
+			  position:absolute;
+			  left:33.3333%;
+			  width:66.6666%;
+			  top:0;bottom:0;
+			}
+			.heading {
+			  background:#fff;
+			  border-bottom:1px solid #eee;
+			  height:60px;
+			  line-height:60px;
+			  padding:0 10px;
+			}
+			.listings {
+			  height:100%;
+			  overflow:auto;
+			  padding-bottom:60px;
+			}
+			.listings .item {
+			  display:block;
+			  border-bottom:1px solid #eee;
+			  padding:10px;
+			  text-decoration:none;
+			}
+			.listings .item:last-child { border-bottom:none; }
+			.listings .item .title {
+			  display:block;
+			  color:#00853e;
+			  font-weight:700;
+			}
+			.listings .item .title small { font-weight:400; }
+			.listings .item.active .title,
+			.listings .item .title:hover { color:#8cc63f; }
+			.listings .item.active {
+			  background-color:#f8f8f8;
+			}
 
-#inputs {
-    z-index: 10;
-    top: 10px;
-    left: 10px;
-}
+			::-webkit-scrollbar {
+			  width:3px;
+			  height:3px;
+			  border-left:0;
+			  background:rgba(0,0,0,0.1);
+			}
+			::-webkit-scrollbar-track {
+			  background:none;
+			}
+			::-webkit-scrollbar-thumb {
+			  background:#00853e;
+			  border-radius:0;
+			}
 
-#directions {
-    z-index: 99;
-    background: rgba(0,0,0,.8);
-    top: 0;
-    right: 0;
-    bottom: 0;
-    overflow: auto;
-}
+			.clearfix { display:block; }
+			.clearfix:after {
+			  content:'.';
+			  display:block;
+			  height:0;
+			  clear:both;
+			  visibility:hidden;
+			}
 
-#errors {
-    z-index: 8;
-    opacity: 0;
-    padding: 10px;
-    border-radius: 0 0 3px 3px;
-    background: rgba(0,0,0,.25);
-    top: 90px;
-    left: 10px;
-}
+			/* Marker tweaks */
+			.leaflet-popup-close-button {
+			  display:none;
+			}
+			.leaflet-popup-content {
+			  font:400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+			  padding:0;
+			  width:200px;
+			}
+			.leaflet-popup-content-wrapper {
+			  padding:0;
+			}
+			.leaflet-popup-content h3 {
+			  background:#91c949;
+			  color:#fff;
+			  margin:0;
+			  display:block;
+			  padding:10px;
+			  border-radius:3px 3px 0 0;
+			  font-weight:700;
+			  margin-top:-15px;
+			}
+			.leaflet-popup-content div {
+			  padding:10px;
+			}
+			.leaflet-container .leaflet-marker-icon { cursor:pointer; }
+		</style>
+	</head>
+	
+	<div class='sidebar'>
+  		<div class='heading'>
+    		<h1>Important Places</h1>
+  		</div>
+  		<div id='listings' class='listings'></div>
+	</div>
+	<div id='map' class='map pad2'>Map</div>
+	<script>
+    	L.mapbox.accessToken = 'pk.eyJ1Ijoiam90aGlybmFkaCIsImEiOiI0MTIzNmYwZmIzNWQ3MjFlNWE2YmE4YzU1YWQyNDdhOCJ9.afll1jVPlwiIoz0bJx51_g';
 
-</style>
+    	var geojson = [
+		  {
+		  	"type":"FeatureCollection",
+		  	"features": [
+		  	  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7676149,17.0093335]
+			    },
+			    "properties": {
+			      "title": "La Hospin",
+			      "description": "Hotel",
+			      "name": "లా హోస్పిన్",
+			      "marker-color": "#2f46f8",
+			      "marker-size": "medium",
+			      "marker-symbol": "restaurant"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7734858,16.991908]
+			    },
+			    "properties": {
+			      "title": "River Bay",
+			      "description": "Hotel",
+			      "name": "నది బే",
+			      "marker-color": "#2f46f8",
+			      "marker-size": "medium",
+			      "marker-symbol": "restaurant"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7753597,16.9910979]
+			    },
+			    "properties": {
+			      "title": "AVAKAI",
+			      "description": "Hotel",
+			      "name": "అవకై",
+			      "marker-color": "#2f46f8",
+			      "marker-size": "medium",
+			      "marker-symbol": "restaurant"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7765369,16.9900157]
+			    },
+			    "properties": {
+			      "title": "GOWTAMI GHAT ADHYATMIKA SAMSTHALA SAMAKHYA",
+			      "description": "Library",
+			      "name": "గౌతమీ ఘాట్ ఆధ్యాత్మిక సంస్థల సమాఖ్య",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "library"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7851057,17.0032434]
+			    },
+			    "properties": {
+			      "title": "SRI KONERU VENKATESWARARAO GARI MEMORIAL MUNCIPAL LIBRARY",
+			      "description": "Library",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "library"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.8204069,17.1092076]
+			    },
+			    "properties": {
+			      "title": "Airport",
+			      "description": "Aeroway= Aerodrome",
+			      "name": "ఎయిర్పోర్ట్ ",
+			      "marker-color": "#2ff0f8",
+			      "marker-size": "medium",
+			      "marker-symbol": "airport"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7777393,16.9918393]
+			    },
+			    "properties": {
+			      "title": "Rajahmundry Head Post Office",
+			      "description": "Government postal Service",
+			      "name": " పోస్ట్ ఆఫీసు",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "post"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7775268,16.9910852]
+			    },
+			    "properties": {
+			      "title": "FIRE STATION",
+			      "description": "Government emergency Service",
+			      "name": "ఫైర్ స్టేషన్",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "fire-station"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7763428,16.9936644]
+			    },
+			    "properties": {
+			      "title": "Kotipalli Bustand",
+			      "description": "Bus station",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "bus"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7893841,17.0024894]
+			    },
+			    "properties": {
+			      "title": "Main Bus Stand",
+			      "description": "Bus station",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "bus"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7766003,16.9933027]
+			    },
+			    "properties": {
+			      "title": "Innespet Taxi Stand",
+			      "description": "Taxi Stand",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "bus"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7781543,17.0134384]
+			    },
+			    "properties": {
+			      "title": "IOCL PETROL BUNK",
+			      "description": "Title : SWANTANTRA PETROL BUNK",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "fuel"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7859015,17.0078736]
+			    },
+			    "properties": {
+			      "title": "BHARAT PETROL BUNK",
+			      "description": "PETROL BUNK",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "fuel"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7840984,16.9837948]
+			    },
+			    "properties": {
+			      "title": "Rajahmundry Railway Station",
+			      "description": "Railway Station",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "rail-above"
+			    }
+			  },
+			  {
+			    "type": "Feature",
+			    "geometry": {
+			      "type": "Point",
+			      "coordinates": [81.7713399,17.006914]
+			    },
+			    "properties": {
+			      "title": "Godhavari Railway Station",
+			      "description": "Railway Station",
+			      "marker-color": "#fc4353",
+			      "marker-size": "medium",
+			      "marker-symbol": "rail-above"
+			    }
+			  }
+			]
+		  }
+		];
 
+    	var map = L.mapbox.map('map', 'jothirnadh.5c02aecb');
 
-<style>
-.legend label,
-.legend span {
-  display:block;
-  float:left;
-  height:15px;
-  width:20%;
-  text-align:center;
-  font-size:9px;
-  color:#808080;
-  }
-</style>
+    	map.setView([17.0083,81.7883], 13);
 
-<!-- Set the display of this container to none so we can
-     add it programmatically to `legendControl` -->
-<div id='legend' style='display:none;'>
-  <strong>Map Legend</strong>
-  <nav class='legend clearfix'>
-    <span style='background:#0e100e;'></span>
-    <span style='background:#f20c0c;'></span>
-    <span style='background:#787e45;'></span>
-    <span style='background:#07f418;'></span>
-    <span style='background:#e6e84f;'></span>
-    <label>ATM</label>
-    <label>Hospital</label>
-    <label>Police Station</label>
-    <label>Park</label>
-    <label>Temple</label>
-    <small>Source: <a href="http://overpass-turbo.eu/">Overpass-Turbo</a></small>
-</div>
+    	var listings = document.getElementById('listings');
+    	var locations = L.mapbox.featureLayer().addTo(map);
 
-
-<script src='https://api.mapbox.com/mapbox.js/plugins/mapbox-directions.js/v0.3.0/mapbox.directions.js'></script>
-<link rel='stylesheet' href='https://api.mapbox.com/mapbox.js/plugins/mapbox-directions.js/v0.3.0/mapbox.directions.css' type='text/css' />
-<script src='https://api.mapbox.com/mapbox.js/plugins/leaflet-hash/v0.2.1/leaflet-hash.js'></script>
-
-<div id='map'></div>
-<div id='inputs'></div>
-<div id='errors'></div>
-<div id='directions'>
-  <div id='routes'></div>
-  <div id='instructions'></div>
-</div>
-
-<script>
-L.mapbox.accessToken = 'pk.eyJ1Ijoiam90aGlybmFkaCIsImEiOiI0MTIzNmYwZmIzNWQ3MjFlNWE2YmE4YzU1YWQyNDdhOCJ9.afll1jVPlwiIoz0bJx51_g';
-
-var geojson = [
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7676149,17.0093335]
-    },
-    "properties": {
-      "title": "La Hospin",
-      "description": "Hotel",
-      "marker-color": "#2f46f8",
-      "marker-size": "medium",
-      "marker-symbol": "restaurant"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7734858,16.991908]
-    },
-    "properties": {
-      "title": "River Bay",
-      "description": "Hotel",
-      "marker-color": "#2f46f8",
-      "marker-size": "medium",
-      "marker-symbol": "restaurant"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7753597,16.9910979]
-    },
-    "properties": {
-      "title": "AVAKAI",
-      "description": "Hotel",
-      "marker-color": "#2f46f8",
-      "marker-size": "medium",
-      "marker-symbol": "restaurant"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7765369,16.9900157]
-    },
-    "properties": {
-      "title": "GOWTAMI GHAT ADHYATMIKA SAMSTHALA SAMAKHYA",
-      "description": "Library",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "library"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7851057,17.0032434]
-    },
-    "properties": {
-      "title": "SRI KONERU VENKATESWARARAO GARI MEMORIAL MUNCIPAL LIBRARY",
-      "description": "Library",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "library"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.8204069,17.1092076]
-    },
-    "properties": {
-      "title": "Airport",
-      "description": "Aeroway= Aerodrome",
-      "marker-color": "#2ff0f8",
-      "marker-size": "medium",
-      "marker-symbol": "airport"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7777393,16.9918393]
-    },
-    "properties": {
-      "title": "Rajahmundry Head Post Office",
-      "description": "Government postal Service",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "post"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7775268,16.9910852]
-    },
-    "properties": {
-      "title": "FIRE STATION",
-      "description": "Government emergency Service",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "fire-station"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7763428,16.9936644]
-    },
-    "properties": {
-      "title": "Kotipalli Bustand",
-      "description": "Bus station",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "bus"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7893841,17.0024894]
-    },
-    "properties": {
-      "title": "Main Bus Stand",
-      "description": "Bus station",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "bus"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7766003,16.9933027]
-    },
-    "properties": {
-      "title": "Innespet Taxi Stand",
-      "description": "Taxi Stand",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "bus"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7781543,17.0134384]
-    },
-    "properties": {
-      "title": "IOCL PETROL BUNK",
-      "description": "Title : SWANTANTRA PETROL BUNK",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "fuel"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7859015,17.0078736]
-    },
-    "properties": {
-      "title": "BHARAT PETROL BUNK",
-      "description": "PETROL BUNK",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "fuel"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7840984,16.9837948]
-    },
-    "properties": {
-      "title": "Rajahmundry Railway Station",
-      "description": "Railway Station",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "rail-above"
-    }
-  },
-  {
-    "type": "Feature",
-    "geometry": {
-      "type": "Point",
-      "coordinates": [81.7713399,17.006914]
-    },
-    "properties": {
-      "title": "Godhavari Railway Station",
-      "description": "Railway Station",
-      "marker-color": "#fc4353",
-      "marker-size": "medium",
-      "marker-symbol": "rail-above"
-    }
-  }
-];
-
-var map = L.mapbox.map('map', null, {
-    zoomControl: false
-})
-    .setView([17.0083,81.7883], 14)
-    .addControl(L.mapbox.geocoderControl('mapbox.places'));
-map.legendControl.addLegend(document.getElementById('legend').innerHTML);
-
-var myLayer = L.mapbox.featureLayer().addTo(map);
-
-var hash = L.hash(map);
-
-var layers = {
-      Streets: L.mapbox.tileLayer('mapbox.streets'),
-      Jothi: L.mapbox.tileLayer('jothirnadh.5c02aecb')
-  };
-
-  layers.Streets.addTo(map);
-  L.control.layers(layers).addTo(map);
+		locations.setGeoJSON(geojson);
 
 
-myLayer.setGeoJSON(geojson);
-myLayer.on('mouseover', function(e) {
-    e.layer.openPopup();
-});
-myLayer.on('mouseout', function(e) {
-    e.layer.closePopup();
-});
+    	function setActive(el) {
+		  var siblings = listings.getElementsByTagName('div');
+		  for (var i = 0; i < siblings.length; i++) {
+		    siblings[i].className = siblings[i].className
+		    .replace(/active/, '').replace(/\s\s*$/, '');
+		  }
 
-// move the attribution control out of the way
-map.attributionControl.setPosition('bottomleft');
+		  el.className += ' active';
+		}
 
-// create the initial directions object, from which the layer
-// and inputs will pull data.
-var directions = L.mapbox.directions();
+		locations.eachLayer(function(locale) {
+		    // Shorten locale.feature.properties to just `prop` so we're not
+		    // writing this long form over and over again.
+		    var prop = locale.feature.properties;
+		    
+		    // Each marker on the map.
+    		var popup = '<h3>' + prop.title + '</h3><div>' + prop.description;
 
-var directionsLayer = L.mapbox.directions.layer(directions)
-    .addTo(map);
 
-var directionsInputControl = L.mapbox.directions.inputControl('inputs', directions)
-    .addTo(map);
+		    var listing = listings.appendChild(document.createElement('div'));
+		    listing.className = 'item';
 
-var directionsErrorsControl = L.mapbox.directions.errorsControl('errors', directions)
-    .addTo(map);
+		    var link = listing.appendChild(document.createElement('a'));
+		    link.href = '#';
+		    link.className = 'title';
+		    link.innerHTML = prop.title;
 
-var directionsRoutesControl = L.mapbox.directions.routesControl('routes', directions)
-    .addTo(map);
+		    if (prop.name) {
+		        link.innerHTML += ' <br /><small>' + prop.name + '</small>';
+		    }
 
-var directionsInstructionsControl = L.mapbox.directions.instructionsControl('instructions', directions)
-    .addTo(map);
+		    var details = listing.appendChild(document.createElement('div'));
+		    details.innerHTML = prop.description;
 
-var nprGrid = L.mapbox.gridLayer('jothirnadh.5c02aecb').addTo(map);
+			link.onclick = function() {
+				setActive(listing);
+			    // 1. Toggle an active class for `listing`. View the source in the demo link for example.
 
-// you would usually use the gridControl to display a nice box in the corner
-// with your data, since we want a popup instead we won't initialize the gridControl
+			    // 2. When a menu item is clicked, animate the map to center
+			    // its associated locale and open its popup.
+			    map.setView(locale.getLatLng(), 16);
+			    locale.openPopup();
+			    return false;
+			};
+			// Marker interaction
+			locale.on('click', function(e) {
+			   // 1. center the map on the selected marker.
+			   map.panTo(locale.getLatLng());
 
-nprGrid.on('mouseover', function(e) {
-    if (!e.data) return;
-    var popup = L.popup()
-        .setLatLng(e.latLng)
-        .setContent(e.data.building)
-        .openOn(map);
-});
+			   // 2. Set active the markers associated listing.
+			   setActive(listing);
+			});
 
-</script>
-
-</body>
+			popup += '</div>';
+  			locale.bindPopup(popup);
+		});
+	</script>
 </html>
